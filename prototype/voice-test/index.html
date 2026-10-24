@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 実機確認用の試作ページ。検索結果に出さない -->
+<meta name="robots" content="noindex, nofollow">
+<title>音声入力の試作｜おやすみメモ</title>
+<meta name="description" content="おやすみメモの音声入力を iPhone 実機で確かめるための試作ページです。">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0b0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="おやすみ試作">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #0b0b0f;
+    --fg: #7a6a58;       /* 暖色寄りの暗い文字色（提案C） */
+    --fg-dim: #4d433a;
+    --line: #1d1a1f;
+    --surface: #121015;
+    --btn-on: #2b241e;   /* 録音中はボタンがほんの少し明るくなるだけ */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font: 16px/1.7 -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+    padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 32px);
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+  h2 { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
+  p { margin: 0 0 12px; }
+  section { border-top: 1px solid var(--line); padding: 24px 0; }
+  .dim { color: var(--fg-dim); }
+  button, textarea {
+    font: inherit; color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px;
+  }
+  button { padding: 10px 16px; min-height: 44px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* 録音ボタン */
+  .rec-wrap { display: grid; place-items: center; gap: 16px; padding: 16px 0 8px; }
+  #recBtn { width: 168px; height: 168px; border-radius: 50%; font-size: 17px; }
+  #recBtn[aria-pressed="true"] { background: var(--btn-on); }
+  #interim { min-height: 1.7em; font-size: 16px; color: var(--fg-dim); opacity: .6; text-align: center; }
+  #azukari { min-height: 1.7em; text-align: center; transition: opacity 1s ease; }
+  #azukari.hide { opacity: 0; }
+  label.opt { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+  input[type="checkbox"] { width: 20px; height: 20px; accent-color: #5a4c40; }
+
+  textarea { width: 100%; min-height: 96px; padding: 12px; resize: vertical; }
+
+  dl.env { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+  dl.env dt { color: var(--fg-dim); }
+  dl.env dd { margin: 0; word-break: break-all; }
+
+  ol.memos { padding-left: 1.4em; margin: 0 0 12px; }
+  ol.memos li { margin-bottom: 6px; }
+  .tag { font-size: 13px; color: var(--fg-dim); }
+
+  #log {
+    white-space: pre-wrap; word-break: break-all; font: 13px/1.6 ui-monospace, Menlo, monospace;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; max-height: 320px; overflow: auto; margin: 0 0 12px;
+  }
+  details summary { cursor: pointer; }
+  details ol { padding-left: 1.4em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>おやすみメモ 音声入力の試作</h1>
+  <p class="dim">iPhone 実機で音声入力を確かめるためのページです。データはこの端末の中（localStorage）にだけ保存されます。</p>
+</header>
+
+<details>
+  <summary>試し方</summary>
+  <ol>
+    <li>Safari で開いたまま「A. 声で預ける」をタップして話す。マイクの許可ダイアログが出たか覚えておく</li>
+    <li>もう一度タップして止める。次は話さずに待って、何秒で勝手に止まるかを見る（ログに出ます）</li>
+    <li>小声でも試す</li>
+    <li>「B. キーボードの音声入力」で、キーボードのマイクボタンから入力する。キーボードが暗い色か見る</li>
+    <li>共有ボタン →「ホーム画面に追加」→ ホーム画面のアイコンから開いて 1〜4 をもう一度。保存したメモが Safari 側と別になっているかも見る</li>
+    <li>翌日（またはアプリを完全に閉じてから）もう一度開いて、マイクの許可をまた聞かれるか見る</li>
+    <li>いちばん下の「結果をコピー」を押して、チャットに貼ってください</li>
+  </ol>
+</details>
+
+<section aria-labelledby="envTitle">
+  <h2 id="envTitle">この端末の状態</h2>
+  <dl class="env">
+    <dt>開き方</dt><dd id="envMode">-</dd>
+    <dt>音声認識 API</dt><dd id="envSR">-</dd>
+    <dt>マイクの許可</dt><dd id="envMic">-</dd>
+    <dt>保存の保護</dt><dd id="envPersist">-</dd>
+    <dt>ブラウザ</dt><dd id="envUA" class="dim">-</dd>
+  </dl>
+  <div class="row" style="margin-top:12px">
+    <button id="persistBtn" type="button">データを消されにくくする</button>
+  </div>
+</section>
+
+<section aria-labelledby="aTitle">
+  <h2 id="aTitle">A. 声で預ける（Web Speech API）</h2>
+  <div class="rec-wrap">
+    <button id="recBtn" type="button" aria-pressed="false" aria-label="録音を開始する">タップして話す</button>
+    <div id="interim" aria-live="off"></div>
+    <div id="azukari" class="hide" role="status"></div>
+  </div>
+  <label class="opt"><input type="checkbox" id="optSilence" checked> 10 秒話さなかったら自動で止めて保存する</label>
+  <label class="opt"><input type="checkbox" id="optRestart"> 認識が勝手に止まったら自動で再開する（許可を聞き直されるかの確認用）</label>
+</section>
+
+<section aria-labelledby="bTitle">
+  <h2 id="bTitle">B. キーボードの音声入力</h2>
+  <p class="dim">欄をタップして、キーボードのマイクボタンで話してください。</p>
+  <textarea id="textInput" aria-label="預けたいことを入力" placeholder="ここに入力"></textarea>
+  <div class="row" style="margin-top:8px">
+    <button id="textBtn" type="button">預ける</button>
+  </div>
+</section>
+
+<section aria-labelledby="mTitle">
+  <h2 id="mTitle">預けたメモ（<span id="memoCount">0</span> 件）</h2>
+  <ol id="memoList" class="memos" reversed></ol>
+  <div class="row">
+    <button id="clearBtn" type="button">メモを全部消す</button>
+  </div>
+</section>
+
+<section aria-labelledby="lTitle">
+  <h2 id="lTitle">ログ</h2>
+  <pre id="log"></pre>
+  <div class="row">
+    <button id="copyBtn" type="button">結果をコピー</button>
+    <span id="copyMsg" class="dim" role="status"></span>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const t0 = performance.now();
+  const logLines = [];
+
+  function log(msg) {
+    const sec = ((performance.now() - t0) / 1000).toFixed(1).padStart(6);
+    logLines.push(`[${sec}s] ${msg}`);
+    $('log').textContent = logLines.join('\n');
+    $('log').scrollTop = $('log').scrollHeight;
+  }
+
+  // ---- 保存（試作なので localStorage。本番は IndexedDB） ----
+  const STORE_KEY = 'oyasumi-proto-memos';
+  function loadMemos() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; }
+  }
+  function saveMemo(text, source) {
+    const t = text.trim();
+    if (!t) return false;
+    const memos = loadMemos();
+    memos.push({ text: t, source, at: Date.now() });
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(memos));
+    } catch (e) {
+      log('保存に失敗: ' + e.message);
+      return false;
+    }
+    renderMemos();
+    return true;
+  }
+  function renderMemos() {
+    const memos = loadMemos();
+    $('memoCount').textContent = memos.length;
+    const list = $('memoList');
+    list.textContent = '';
+    for (const m of memos.slice().reverse()) {
+      const li = document.createElement('li');
+      const time = new Date(m.at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      li.textContent = m.text + ' ';
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = `（${m.source}・${time}）`;
+      li.appendChild(tag);
+      list.appendChild(li);
+    }
+  }
+
+  // ---- 「預かりました」の表示 ----
+  let azukariTimer = 0;
+  function showStatus(msg) {
+    const el = $('azukari');
+    clearTimeout(azukariTimer);
+    el.textContent = msg;
+    el.classList.remove('hide');
+    azukariTimer = setTimeout(() => el.classList.add('hide'), 2000);
+  }
+
+  // ---- 端末の状態 ----
+  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  $('envMode').textContent = standalone ? 'ホーム画面アプリ' : 'ブラウザのタブ';
+  $('envSR').textContent = SR ? (window.SpeechRecognition ? 'あり（SpeechRecognition）' : 'あり（webkitSpeechRecognition）') : 'なし';
+  $('envUA').textContent = navigator.userAgent;
+  log(`開き方: ${$('envMode').textContent} / 音声認識 API: ${$('envSR').textContent}`);
+
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'microphone' }).then((st) => {
+      $('envMic').textContent = st.state;
+      log('マイクの許可の状態: ' + st.state);
+      st.onchange = () => {
+        $('envMic').textContent = st.state;
+        log('マイクの許可の状態が変化: ' + st.state);
+      };
+    }).catch(() => { $('envMic').textContent = '取得できない'; });
+  } else {
+    $('envMic').textContent = '取得できない';
+  }
+
+  function updatePersisted() {
+    if (!navigator.storage || !navigator.storage.persisted) {
+      $('envPersist').textContent = '未対応';
+      return;
+    }
+    navigator.storage.persisted().then((p) => {
+      $('envPersist').textContent = p ? '保護されている' : '保護されていない';
+    });
+  }
+  updatePersisted();
+  $('persistBtn').addEventListener('click', async () => {
+    if (!navigator.storage || !navigator.storage.persist) { log('storage.persist は未対応'); return; }
+    const ok = await navigator.storage.persist();
+    log('storage.persist の結果: ' + ok);
+    updatePersisted();
+  });
+
+  // ---- A. Web Speech API ----
+  const recBtn = $('recBtn');
+  let rec = null;
+  let wantListening = false;   // ユーザーが「録音中」にしているか
+  let pendingInterim = '';     // まだ確定していない文字
+  let lastResultAt = 0;
+  let startedAt = 0;
+  let sessionNo = 0;
+  let savedThisTap = 0;
+
+  function setRecUi(on) {
+    recBtn.setAttribute('aria-pressed', String(on));
+    recBtn.setAttribute('aria-label', on ? '録音を止める' : '録音を開始する');
+    recBtn.textContent = on ? '聞いています' : 'タップして話す';
+  }
+
+  function startRecognition() {
+    const n = ++sessionNo;
+    lastResultAt = performance.now(); // 開始前に無音タイマーが誤って働かないように
+    rec = new SR();
+    rec.lang = 'ja-JP';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    rec.onstart = () => {
+      startedAt = lastResultAt = performance.now();
+      log(`#${n} start`);
+    };
+    rec.onaudiostart = () => log(`#${n} audiostart（マイクの入力が始まった）`);
+    rec.onspeechstart = () => log(`#${n} speechstart`);
+    rec.onspeechend = () => log(`#${n} speechend`);
+    rec.onnomatch = () => log(`#${n} nomatch`);
+    rec.onerror = (e) => log(`#${n} error: ${e.error}${e.message ? ' ' + e.message : ''}`);
+
+    rec.onresult = (e) => {
+      lastResultAt = performance.now();
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        const txt = r[0].transcript;
+        if (r.isFinal) {
+          log(`#${n} 確定: 「${txt}」`);
+          if (saveMemo(txt, '声')) savedThisTap++;
+        } else {
+          interim += txt;
+        }
+      }
+      pendingInterim = interim;
+      $('interim').textContent = interim;
+    };
+
+    rec.onend = () => {
+      const now = performance.now();
+      log(`#${n} end（開始から ${((now - startedAt) / 1000).toFixed(1)} 秒、最後に認識してから ${((now - lastResultAt) / 1000).toFixed(1)} 秒）`);
+      // iOS では確定しないまま終わることがあるので、残った文字も保存する
+      if (pendingInterim.trim()) {
+        log(`#${n} 確定しないまま終わった文字を保存: 「${pendingInterim}」`);
+        if (saveMemo(pendingInterim, '声・未確定')) savedThisTap++;
+      }
+      pendingInterim = '';
+      $('interim').textContent = '';
+
+      if (wantListening && $('optRestart').checked) {
+        log('自動で再開します');
+        try { startRecognition(); return; } catch (err) { log('再開に失敗: ' + err.message); }
+      }
+      if (wantListening) log('（ボタンを押していないのに止まりました）');
+      finishTap();
+    };
+
+    try {
+      rec.start();
+    } catch (err) {
+      log('start に失敗: ' + err.message);
+      finishTap();
+    }
+  }
+
+  function finishTap() {
+    wantListening = false;
+    setRecUi(false);
+    showStatus(savedThisTap > 0 ? '預かりました' : '聞き取れませんでした');
+  }
+
+  recBtn.addEventListener('click', () => {
+    if (!SR) {
+      showStatus('この端末では使えません。B を試してください');
+      log('音声認識 API が無いため開始できません');
+      return;
+    }
+    if (!wantListening) {
+      wantListening = true;
+      savedThisTap = 0;
+      setRecUi(true);
+      startRecognition();
+    } else {
+      log('ボタンで停止');
+      wantListening = false;
+      if (rec) rec.stop();
+    }
+  });
+
+  // 10 秒話さなかったら止める（寝落ち対策）
+  setInterval(() => {
+    if (wantListening && $('optSilence').checked && performance.now() - lastResultAt > 10000) {
+      log('10 秒認識が無かったので自動停止');
+      wantListening = false;
+      if (rec) rec.stop();
+    }
+  }, 500);
+
+  // ---- B. テキスト（キーボードの音声入力） ----
+  $('textBtn').addEventListener('click', () => {
+    const el = $('textInput');
+    const text = el.value;
+    if (saveMemo(text, 'キーボード')) {
+      log(`キーボードから保存: 「${text.trim()}」`);
+      el.value = '';
+      el.blur();
+      showStatus('預かりました');
+    }
+  });
+
+  $('clearBtn').addEventListener('click', () => {
+    if (!confirm('預けたメモを全部消しますか？')) return;
+    try { localStorage.removeItem(STORE_KEY); } catch {}
+    renderMemos();
+    log('メモを全部消しました');
+  });
+
+  // ---- 結果をコピー ----
+  $('copyBtn').addEventListener('click', async () => {
+    const memos = loadMemos();
+    const report = [
+      '【おやすみメモ 音声入力の試作 結果】',
+      '開き方: ' + $('envMode').textContent,
+      '音声認識 API: ' + $('envSR').textContent,
+      'マイクの許可: ' + $('envMic').textContent,
+      '保存の保護: ' + $('envPersist').textContent,
+      'ブラウザ: ' + navigator.userAgent,
+      `保存したメモ: ${memos.length} 件`,
+      ...memos.map((m) => `- ${m.text}（${m.source}）`),
+      '',
+      '--- ログ ---',
+      ...logLines,
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(report);
+      $('copyMsg').textContent = 'コピーしました';
+    } catch {
+      // クリップボードが使えないときは、ログ欄に出して手で選んでもらう
+      $('log').textContent = report;
+      $('copyMsg').textContent = 'ログ欄を長押しして全選択→コピーしてください';
+    }
+  });
+
+  renderMemos();
+})();
+</script>
+</body>
+</html>
