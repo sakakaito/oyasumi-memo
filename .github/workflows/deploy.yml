@@ -1,0 +1,60 @@
+# main に push したとき（と手動実行）に、テスト → ビルド → GitHub Pages への公開を行う。
+# 使うには Settings → Pages → Source を「GitHub Actions」にする（docs/plan.md 1-E）
+name: GitHub Pages に公開
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 既定はいちばん弱い権限。公開に必要な権限は deploy のジョブだけに与える
+permissions:
+  contents: read
+
+# 公開は 1 つずつ。実行中の公開は途中で止めない（新しい push は順番待ちになる）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: テスト
+        run: npm test
+
+      - name: ビルド（型チェック → vite build）
+        run: npm run build:app
+
+      - name: 試作ページと設計モックを、Vite に通さずそのままコピー
+        run: npm run copy:static
+
+      - name: SEO 点検（コピーしたページも含めて。抜けがあればここで止まり、公開しない）
+        run: npm run check:seo
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+          include-hidden-files: true # .nojekyll も入れる
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

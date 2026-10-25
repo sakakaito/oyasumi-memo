@@ -1,0 +1,122 @@
+/*
+ * デザイントークン（docs/design/tokens.md の案をそのまま写したもの）
+ * - 部品は --n-* / --m-* を直接使わず、下の「役割の変数」（--bg・--text・--surface など）を使う
+ * - 夜・朝の切り替えは <html data-mode="night|morning|intro">
+ * - data-mode が無いあいだ（読み込みの最初）は夜の色にして、夜に白い光を出さない
+ */
+
+/* ---- 共通（夜・朝・紹介で同じ） ---- */
+:root {
+  /* 文字 */
+  --font: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+  --fs-min:     16px;  /* これより小さい文字は使わない。入力欄も 16px 以上（iPhone で勝手に拡大されない） */
+  --fs-body:    17px;
+  --fs-lead:    18px;
+  --fs-rec:     20px;
+  --fs-title:   22px;
+  --fs-display: 28px;
+  --lh-body:    1.7;
+  --lh-title:   1.4;
+  --fw-normal:  400;
+  --fw-medium:  500;
+  --fw-strong:  600;   /* 夜は 700 を使わない（太すぎる文字は明るく見える） */
+
+  /* 余白（4 の倍数） */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+  --gutter: 16px;
+  --max-w: 560px;
+
+  /* タップ領域 */
+  --tap-min: 44px;
+  --tap:     48px;
+  --tap-gap: 8px;
+  --rec-size: 184px;
+
+  /* 角丸 */
+  --r-s: 8px; --r-m: 12px; --r-l: 20px; --r-full: 999px;
+
+  /* 動き（夜は不透明度と背景色の変化だけに使う） */
+  --fade-status: 1000ms;  /* src/hooks/useNotice.ts の FADE_MS と合わせる */
+  --t-quick:     150ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --fade-status: 0ms; --t-quick: 0ms; }
+}
+
+/* ---- 夜（night）。読み込みの最初と紹介ページもこの色 ---- */
+:root {
+  --n-bg:         #0b0b0f;
+  --n-surface:    #141117;
+  --n-surface-2:  #1b171b;
+  --n-rec-on:     #2b241e;
+  --n-black:      #000000;
+  --n-line:       #3a3230;
+
+  /*
+   * 夜の「読む文字」の色。オーナーが比較中（未決）：
+   *   #917e68 … tokens.md のおすすめ（背景に対して 5.04:1。読む文字の基準 4.5:1 を満たす）← いまはこちら
+   *   #7a6a58 … 試作 v2 の色（3.77:1。基準 4.5:1 には届かない）
+   * ここ 1 か所を書き換えれば、夜の文字とフォーカス枠がまとめて変わる
+   */
+  --n-text:       #917e68;
+  --n-text-sub:   #73644f;
+  --n-text-faint: #3d352d;
+  --n-warn:       #a07f4c;
+  --n-focus:      var(--n-text);
+
+  /* 役割の変数（部品はこちらを使う） */
+  --bg:         var(--n-bg);
+  --surface:    var(--n-surface);
+  --surface-2:  var(--n-surface-2);
+  --rec-on:     var(--n-rec-on);
+  --line:       var(--n-line);
+  --text:       var(--n-text);
+  --text-sub:   var(--n-text-sub);
+  --text-faint: var(--n-text-faint);
+  --warn:       var(--n-warn);
+  --focus:      var(--n-focus);
+  --primary:    var(--n-surface);
+  --on-primary: var(--n-text);
+  --danger:     var(--n-warn);
+}
+
+/* ---- 朝（morning）。設定画面も朝の色 ---- */
+:root[data-mode="morning"] {
+  --m-bg:          #f6f2ea;
+  --m-surface:     #fffdf8;
+  --m-line:        #ddd3c6;
+  --m-control:     #857868;
+
+  --m-text:        #2b2622;
+  --m-text-sub:    #5f554c;
+  --m-primary:     #6b4a2b;
+  --m-on-primary:  #fffdf8;
+  --m-danger:      #8f3324;
+  --m-focus:       #6b4a2b;
+
+  /* 分類のしるし（色だけに頼らず、必ず文字を添える）。フェーズ3 で使う */
+  --m-todo-fg:  #5c3b1e;  --m-todo-bg:  #f3e6d6;
+  --m-worry-fg: #4a3f5c;  --m-worry-bg: #ece8f1;
+  --m-idea-fg:  #2f4a3a;  --m-idea-bg:  #e2ece4;
+  --m-other-fg: #4a4038;  --m-other-bg: #ebe5dc;
+
+  --bg:         var(--m-bg);
+  --surface:    var(--m-surface);
+  --surface-2:  var(--m-surface);
+  --line:       var(--m-line);
+  --control:    var(--m-control);
+  --text:       var(--m-text);
+  --text-sub:   var(--m-text-sub);
+  --focus:      var(--m-focus);
+  --primary:    var(--m-primary);
+  --on-primary: var(--m-on-primary);
+  --danger:     var(--m-danger);
+}
+
+/* ---- 紹介ページ（intro）。夜のトークンを継承し、長文の本文だけ 1 段明るく ---- */
+:root[data-mode="intro"] {
+  --i-text-read: #9a8770;  /* 背景に対して 5.68:1（長文を読むための例外） */
+  --text-read:   var(--i-text-read);
+}

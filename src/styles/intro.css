@@ -1,0 +1,24 @@
+/* 仮の紹介ページ（準備中）。夜でも眩しくないよう、夜のトークンをそのまま使う（tokens.md §4） */
+@import './theme.css';
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body { font: var(--fs-body)/var(--lh-body) var(--font); -webkit-text-size-adjust: 100%; }
+.intro {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding:
+    calc(env(safe-area-inset-top) + var(--sp-7))
+    calc(env(safe-area-inset-right) + var(--gutter))
+    calc(env(safe-area-inset-bottom) + var(--sp-7))
+    calc(env(safe-area-inset-left) + var(--gutter));
+}
+.intro h1 { font-size: var(--fs-display); font-weight: var(--fw-medium); line-height: var(--lh-title); margin: 0 0 var(--sp-5); }
+.intro p { margin: 0 0 var(--sp-4); color: var(--text-read, var(--text)); }
+.intro-link {
+  display: inline-flex; align-items: center;
+  min-height: var(--tap); padding: 0 var(--sp-5); margin-top: var(--sp-4);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m);
+  color: var(--text); text-decoration: none;
+}
+.intro-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }

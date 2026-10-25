@@ -1,0 +1,104 @@
+/* アプリの部品の見た目。色・大きさは theme.css の役割の変数（--bg・--text など）だけを使う */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font: var(--fs-min)/var(--lh-body) var(--font);
+  -webkit-text-size-adjust: 100%;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* 画面を切り替えたときに見出しへ移すフォーカスは、枠を出さない（見出しは押せる部品ではないため） */
+h1:focus { outline: none; }
+
+/* ---- 画面の枠 ---- */
+.screen {
+  min-height: 100vh;
+  min-height: 100svh;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding:
+    calc(env(safe-area-inset-top) + var(--sp-2))
+    calc(env(safe-area-inset-right) + var(--gutter))
+    calc(env(safe-area-inset-bottom) + var(--sp-4))
+    calc(env(safe-area-inset-left) + var(--gutter));
+}
+.top { display: flex; justify-content: space-between; align-items: center; min-height: var(--tap-min); gap: var(--sp-2); }
+.top-end { justify-content: flex-end; }
+.top-icons { display: flex; margin-right: calc(var(--sp-2) * -1); }
+
+.icon-btn {
+  width: var(--tap-min); height: var(--tap-min);
+  display: grid; place-items: center;
+  padding: 0; background: none; border: 0;
+  color: var(--text-sub);
+}
+.top-end .icon-btn { margin-right: calc(var(--sp-2) * -1); }
+.icon-btn svg { width: 24px; height: 24px; }
+
+.text-btn {
+  min-height: var(--tap-min); min-width: var(--tap-min);
+  padding: 0 var(--sp-2); margin-left: calc(var(--sp-2) * -1);
+  background: none; border: 0; color: var(--text); font-size: var(--fs-min);
+}
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  color: var(--text);
+  font-size: var(--fs-min);
+}
+.btn.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: var(--fw-strong); }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+
+.row { display: flex; flex-wrap: wrap; gap: var(--tap-gap); }
+.row > .btn { flex: 1 1 auto; }
+
+.bottom { display: flex; gap: var(--tap-gap); }
+.bottom > .btn { flex: 1; }
+
+/* ---- 状態の表示行（高さ固定・不透明度だけで消す） ---- */
+.line { position: relative; width: 100%; height: calc(var(--fs-min) * var(--lh-body) * 2); }
+.status { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity var(--fade-status); }
+.status.show { opacity: 1; transition: none; }
+
+/* ---- 夜 ---- */
+.night .center {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: var(--sp-5) 0;
+}
+.night h1 { font-size: var(--fs-lead); font-weight: var(--fw-medium); line-height: var(--lh-title); margin: 0; }
+.night .line { margin-top: var(--sp-4); }
+.rec {
+  width: var(--rec-size); height: var(--rec-size);
+  margin-top: var(--sp-6);
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-rec); font-weight: var(--fw-strong); line-height: var(--lh-title);
+  transition: background-color 300ms;
+}
+.rec[aria-pressed="true"] { background: var(--rec-on); }
+
+/* ---- 朝・設定 ---- */
+.morning .title { font-size: var(--fs-title); font-weight: var(--fw-strong); line-height: var(--lh-title); margin: 0; }
+.morning .body { padding: var(--sp-4) 0 var(--sp-6); font-size: var(--fs-body); }
+.morning .empty { margin: var(--sp-6) 0; text-align: center; color: var(--text-sub); }
+.morning .bottom.fixed {
+  position: sticky; bottom: 0;
+  flex-direction: column; gap: 0;
+  padding-top: var(--sp-2);
+  background: var(--bg);
+}
+.morning .bottom.fixed .line { height: calc(var(--fs-min) * var(--lh-body)); text-align: center; }
+.group { margin: var(--sp-6) 0 0; }
+.group h2 { font-size: var(--fs-lead); font-weight: var(--fw-strong); line-height: var(--lh-title); margin: 0 0 var(--sp-3); }
+.group p { margin: 0 0 var(--sp-3); }
+.sub-text { color: var(--text-sub); }
+.body .title + .group { margin-top: var(--sp-5); }

@@ -1,0 +1,5 @@
+# いまはすべてのページに noindex を付けている段階。
+# クロールを止めると noindex が読まれないので、Disallow はしない（scripts/check-seo.mjs で点検）
+# サイトマップは、検索に出すページができたら足す（フェーズ6）
+User-agent: *
+Allow: /
