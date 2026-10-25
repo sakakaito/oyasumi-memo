@@ -3,3 +3,6 @@ dist/
 .DS_Store
 # このアプリと関係のないファイル
 snapshots/
+# Claude Code の手元設定（エージェント定義 .claude/agents は共有する）
+.claude/launch.json
+.claude/settings.local.json

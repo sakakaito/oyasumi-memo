@@ -24,6 +24,7 @@
     --line: #1d1a1f;
     --surface: #121015;
     --btn-on: #2b241e;   /* 録音中はボタンがほんの少し明るくなるだけ */
+    --warn: #8a6a3a;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--fg); }
@@ -38,12 +39,21 @@
   p { margin: 0 0 12px; }
   section { border-top: 1px solid var(--line); padding: 24px 0; }
   .dim { color: var(--fg-dim); }
-  button, textarea {
+  button, textarea, select {
     font: inherit; color: var(--fg); background: var(--surface);
     border: 1px solid var(--line); border-radius: 12px;
   }
   button { padding: 10px 16px; min-height: 44px; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* メモ／日記の切り替え */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modes button[aria-pressed="true"] { background: var(--btn-on); border-color: #3a3028; }
+
+  /* 困ったときの案内 */
+  #help { display: none; border: 1px solid var(--warn); border-radius: 12px; padding: 12px; margin: 0 0 16px; }
+  #help.show { display: block; }
+  #help p:last-child { margin-bottom: 0; }
 
   /* 録音ボタン */
   .rec-wrap { display: grid; place-items: center; gap: 16px; padding: 16px 0 8px; }
@@ -52,17 +62,22 @@
   #interim { min-height: 1.7em; font-size: 16px; color: var(--fg-dim); opacity: .6; text-align: center; }
   #azukari { min-height: 1.7em; text-align: center; transition: opacity 1s ease; }
   #azukari.hide { opacity: 0; }
-  label.opt { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
-  input[type="checkbox"] { width: 20px; height: 20px; accent-color: #5a4c40; }
+  label.opt { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+  input[type="checkbox"] { width: 20px; height: 20px; flex: none; accent-color: #5a4c40; }
+  select { padding: 6px 8px; }
 
-  textarea { width: 100%; min-height: 96px; padding: 12px; resize: vertical; }
+  /* マイクの音量メーター（動作チェックのときだけ） */
+  .meter { height: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .meter span { display: block; height: 100%; width: 0; background: #5a4c40; }
+
+  textarea { width: 100%; min-height: 120px; padding: 12px; resize: vertical; }
 
   dl.env { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
   dl.env dt { color: var(--fg-dim); }
   dl.env dd { margin: 0; word-break: break-all; }
 
   ol.memos { padding-left: 1.4em; margin: 0 0 12px; }
-  ol.memos li { margin-bottom: 6px; }
+  ol.memos li { margin-bottom: 8px; white-space: pre-wrap; }
   .tag { font-size: 13px; color: var(--fg-dim); }
 
   #log {
@@ -71,24 +86,33 @@
     padding: 12px; max-height: 320px; overflow: auto; margin: 0 0 12px;
   }
   details summary { cursor: pointer; }
-  details ol { padding-left: 1.4em; }
+  details ol, details ul { padding-left: 1.4em; }
 </style>
 </head>
 <body>
 <header>
   <h1>おやすみメモ 音声入力の試作</h1>
-  <p class="dim">iPhone 実機で音声入力を確かめるためのページです。データはこの端末の中（localStorage）にだけ保存されます。</p>
+  <p class="dim">iPhone 実機で音声入力を確かめるためのページです（v2）。データはこの端末の中（localStorage）にだけ保存されます。</p>
 </header>
+
+<details>
+  <summary>マイクが使えないときは（先に確認）</summary>
+  <ul>
+    <li><b>iPhone の「音声入力」をオンにする</b>：設定 → 一般 → キーボード →「音声入力」。オフだと、マイクを許可していても A は動きません</li>
+    <li><b>Safari のマイクを許可する</b>：アドレスバー左の「ぁあ」→ Web サイトの設定 → マイク →「許可」。または 設定 →（アプリ →）Safari → マイク</li>
+    <li><b>スクリーンタイムの制限</b>：設定 → スクリーンタイム → コンテンツとプライバシーの制限 で、Siri と音声入力が制限されていないか</li>
+    <li><b>ホーム画面から開いたアプリでは A が使えないことがあります</b>（iPhone の仕組みの制限）。その場合は B（キーボードのマイク）を使うか、Safari で開いてください</li>
+  </ul>
+</details>
 
 <details>
   <summary>試し方</summary>
   <ol>
-    <li>Safari で開いたまま「A. 声で預ける」をタップして話す。マイクの許可ダイアログが出たか覚えておく</li>
-    <li>もう一度タップして止める。次は話さずに待って、何秒で勝手に止まるかを見る（ログに出ます）</li>
-    <li>小声でも試す</li>
-    <li>「B. キーボードの音声入力」で、キーボードのマイクボタンから入力する。キーボードが暗い色か見る</li>
-    <li>共有ボタン →「ホーム画面に追加」→ ホーム画面のアイコンから開いて 1〜4 をもう一度。保存したメモが Safari 側と別になっているかも見る</li>
-    <li>翌日（またはアプリを完全に閉じてから）もう一度開いて、マイクの許可をまた聞かれるか見る</li>
+    <li>「マイクの動作チェック」でメーターが声に合わせて動くか見る</li>
+    <li>「考えごとを預ける」で A を試す。止めたら「預かりました」と出るか</li>
+    <li>「今日の日記」に切り替えて、A で 1〜2 分ほど話し続ける。途中で切れずに 1 つの日記として保存されるか</li>
+    <li>B（キーボードのマイク）でも、メモと日記を 1 つずつ試す</li>
+    <li>共有 →「ホーム画面に追加」→ 月のアイコンから開いて、1〜4 をもう一度</li>
     <li>いちばん下の「結果をコピー」を押して、チャットに貼ってください</li>
   </ol>
 </details>
@@ -103,35 +127,60 @@
     <dt>ブラウザ</dt><dd id="envUA" class="dim">-</dd>
   </dl>
   <div class="row" style="margin-top:12px">
+    <button id="micCheckBtn" type="button">マイクの動作チェック</button>
     <button id="persistBtn" type="button">データを消されにくくする</button>
   </div>
+  <div class="meter" aria-hidden="true"><span id="meterBar"></span></div>
+  <p id="micCheckMsg" class="dim" role="status" style="margin-top:8px"></p>
 </section>
 
+<section aria-labelledby="modeTitle">
+  <h2 id="modeTitle">何を残しますか</h2>
+  <div class="modes" role="group" aria-label="残すものの種類">
+    <button type="button" id="modeMemo" aria-pressed="true">考えごとを預ける</button>
+    <button type="button" id="modeDiary" aria-pressed="false">今日の日記</button>
+  </div>
+  <p id="modeDesc" class="dim" style="margin-top:8px"></p>
+</section>
+
+<div id="help" role="alert"></div>
+
 <section aria-labelledby="aTitle">
-  <h2 id="aTitle">A. 声で預ける（Web Speech API）</h2>
+  <h2 id="aTitle">A. 声で残す（Web Speech API）</h2>
   <div class="rec-wrap">
     <button id="recBtn" type="button" aria-pressed="false" aria-label="録音を開始する">タップして話す</button>
     <div id="interim" aria-live="off"></div>
     <div id="azukari" class="hide" role="status"></div>
   </div>
-  <label class="opt"><input type="checkbox" id="optSilence" checked> 10 秒話さなかったら自動で止めて保存する</label>
-  <label class="opt"><input type="checkbox" id="optRestart"> 認識が勝手に止まったら自動で再開する（許可を聞き直されるかの確認用）</label>
+  <details>
+    <summary class="dim">細かい設定（試験用）</summary>
+    <label class="opt"><input type="checkbox" id="optChain" checked> 認識が途切れても自動でつないで、話し続けられるようにする</label>
+    <label class="opt"><input type="checkbox" id="optContinuous"> 連続モードを使う（iPhone では文字が確定しないことがあるため、初期値はオフ）</label>
+    <label class="opt">話さない時間がこれだけ続いたら止めて保存
+      <select id="optSilence" aria-label="自動で止めるまでの秒数">
+        <option value="10">10 秒</option>
+        <option value="20">20 秒</option>
+        <option value="30">30 秒</option>
+        <option value="0">止めない</option>
+      </select>
+    </label>
+  </details>
 </section>
 
 <section aria-labelledby="bTitle">
-  <h2 id="bTitle">B. キーボードの音声入力</h2>
-  <p class="dim">欄をタップして、キーボードのマイクボタンで話してください。</p>
-  <textarea id="textInput" aria-label="預けたいことを入力" placeholder="ここに入力"></textarea>
+  <h2 id="bTitle">B. キーボードのマイクで残す</h2>
+  <p class="dim">欄をタップして、キーボード右下（または左下）のマイクボタンで話してください。A が使えないときもこちらは使えます。</p>
+  <textarea id="textInput" aria-label="残したいことを入力" placeholder="ここに入力"></textarea>
   <div class="row" style="margin-top:8px">
     <button id="textBtn" type="button">預ける</button>
   </div>
 </section>
 
 <section aria-labelledby="mTitle">
-  <h2 id="mTitle">預けたメモ（<span id="memoCount">0</span> 件）</h2>
+  <h2 id="mTitle">残したもの（<span id="memoCount">0</span> 件）</h2>
   <ol id="memoList" class="memos" reversed></ol>
   <div class="row">
-    <button id="clearBtn" type="button">メモを全部消す</button>
+    <button id="clearBtn" type="button">全部消す</button>
   </div>
 </section>
 
@@ -158,16 +207,43 @@
     $('log').scrollTop = $('log').scrollHeight;
   }
 
+  // ---- 端末の判定 ----
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  // iPhone では連続モードで文字が確定しないことがあるので、初期値はオフ
+  $('optContinuous').checked = !isIOS;
+
+  // ---- メモ／日記の切り替え ----
+  let mode = 'memo';
+  const MODE_TEXT = {
+    memo: { label: '考えごと', desc: '話した区切りごとに、1 件ずつ預けます。' },
+    diary: { label: '日記', desc: '1 回の録音（タップしてから止めるまで）を、1 つの日記としてまとめて残します。' },
+  };
+  function setMode(next) {
+    mode = next;
+    $('modeMemo').setAttribute('aria-pressed', String(mode === 'memo'));
+    $('modeDiary').setAttribute('aria-pressed', String(mode === 'diary'));
+    $('modeDesc').textContent = MODE_TEXT[mode].desc;
+    $('textBtn').textContent = mode === 'memo' ? '預ける' : '日記に残す';
+    // 日記は長く話すので、自動停止までの時間を長めにする
+    $('optSilence').value = mode === 'memo' ? '10' : '20';
+  }
+  $('modeMemo').addEventListener('click', () => { if (!wantListening) setMode('memo'); });
+  $('modeDiary').addEventListener('click', () => { if (!wantListening) setMode('diary'); });
+
   // ---- 保存（試作なので localStorage。本番は IndexedDB） ----
   const STORE_KEY = 'oyasumi-proto-memos';
   function loadMemos() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; }
   }
-  function saveMemo(text, source) {
+  function saveEntry(text, source, kind) {
     const t = text.trim();
     if (!t) return false;
     const memos = loadMemos();
-    memos.push({ text: t, source, at: Date.now() });
+    memos.push({ text: t, source, kind, at: Date.now() });
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(memos));
     } catch (e) {
@@ -185,16 +261,26 @@
     for (const m of memos.slice().reverse()) {
       const li = document.createElement('li');
       const time = new Date(m.at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const kindLabel = (MODE_TEXT[m.kind] || MODE_TEXT.memo).label;
       li.textContent = m.text + ' ';
       const tag = document.createElement('span');
       tag.className = 'tag';
-      tag.textContent = `（${m.source}・${time}）`;
+      tag.textContent = `（${kindLabel}・${m.source}・${time}）`;
       li.appendChild(tag);
       list.appendChild(li);
     }
   }
 
-  // ---- 「預かりました」の表示 ----
+  // 認識の区切りどうしをつなぐ。句点が無ければ「。」を補う
+  function joinSegments(segments) {
+    return segments
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => (/[。！？!?]$/.test(s) ? s : s + '。'))
+      .join('');
+  }
+
+  // ---- 表示 ----
   let azukariTimer = 0;
   function showStatus(msg) {
     const el = $('azukari');
@@ -203,14 +289,59 @@
     el.classList.remove('hide');
     azukariTimer = setTimeout(() => el.classList.add('hide'), 2000);
   }
+  function showHelp(paragraphs) {
+    const el = $('help');
+    el.textContent = '';
+    for (const text of paragraphs) {
+      const p = document.createElement('p');
+      p.textContent = text;
+      el.appendChild(p);
+    }
+    el.classList.add('show');
+  }
+  function hideHelp() { $('help').classList.remove('show'); }
+
+  // 音声認識のエラーを、iPhone での直し方つきの案内に変える
+  const ERROR_HELP = {
+    'not-allowed': [
+      'マイクの使用が許可されていません。',
+      'アドレスバー左の「ぁあ」→ Web サイトの設定 → マイク を「許可」にしてから、もう一度タップしてください。',
+    ],
+    'service-not-allowed': [
+      'iPhone の音声認識を使えませんでした。',
+      'まず 設定 → 一般 → キーボード →「音声入力」がオンか確認してください。スクリーンタイムで Siri と音声入力が制限されている場合も使えません。',
+      standalone
+        ? 'ホーム画面から開いたアプリでは、iPhone の仕組み上この方法が使えないことがあります。B（キーボードのマイク）を使うか、Safari で開いてください。'
+        : 'それでも駄目なときは、B（キーボードのマイク）を使ってください。',
+    ],
+    'audio-capture': [
+      'マイクが使えませんでした。',
+      '通話中や、ほかのアプリがマイクや音声を使っていないか確認してください。',
+    ],
+    'network': [
+      '音声認識に接続できませんでした。',
+      '声を文字にするにはインターネット接続が必要です。電波の状態を確認してください。B（キーボードのマイク）なら使えることがあります。',
+    ],
+    'language-not-supported': [
+      'この端末では日本語の音声認識が使えませんでした。',
+      'B（キーボードのマイク）を使ってください。',
+    ],
+  };
 
   // ---- 端末の状態 ----
-  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   $('envMode').textContent = standalone ? 'ホーム画面アプリ' : 'ブラウザのタブ';
   $('envSR').textContent = SR ? (window.SpeechRecognition ? 'あり（SpeechRecognition）' : 'あり（webkitSpeechRecognition）') : 'なし';
-  $('envUA').textContent = navigator.userAgent;
-  log(`開き方: ${$('envMode').textContent} / 音声認識 API: ${$('envSR').textContent}`);
+  $('envUA').textContent = ua;
+  log(`v2 / 開き方: ${$('envMode').textContent} / 音声認識 API: ${$('envSR').textContent} / iOS: ${isIOS}`);
+
+  if (!SR) {
+    showHelp([
+      standalone
+        ? 'ホーム画面から開いたアプリでは、iPhone の仕組み上 A（声で残す）が使えません。'
+        : 'このブラウザでは A（声で残す）が使えません。',
+      'B（キーボードのマイク）を使ってください。' + (standalone ? ' A を使いたいときは Safari で開いてください。' : ''),
+    ]);
+  }
 
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'microphone' }).then((st) => {
@@ -242,15 +373,78 @@
     updatePersisted();
   });
 
+  // ---- マイクの動作チェック（マイク自体が音を拾えるか） ----
+  let checking = false;
+  $('micCheckBtn').addEventListener('click', async () => {
+    if (checking) return;
+    if (wantListening) { $('micCheckMsg').textContent = '録音中はチェックできません。'; return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $('micCheckMsg').textContent = 'このブラウザではマイクのチェックができません。';
+      log('getUserMedia が無い');
+      return;
+    }
+    checking = true;
+    $('micCheckMsg').textContent = '5 秒間、何か話してみてください。';
+    let stream = null;
+    let ctx = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      log('マイクの動作チェック: マイクを開けた');
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      src.connect(analyser);
+      const buf = new Uint8Array(analyser.fftSize);
+      let peak = 0;
+      const until = performance.now() + 5000;
+      await new Promise((resolve) => {
+        const tick = () => {
+          analyser.getByteTimeDomainData(buf);
+          let max = 0;
+          for (const v of buf) max = Math.max(max, Math.abs(v - 128));
+          const level = Math.min(1, max / 64);
+          peak = Math.max(peak, level);
+          $('meterBar').style.width = Math.round(level * 100) + '%';
+          if (performance.now() < until) requestAnimationFrame(tick); else resolve();
+        };
+        tick();
+      });
+      const ok = peak > 0.08;
+      $('micCheckMsg').textContent = ok
+        ? 'マイクは音を拾えています。A が動かない場合は、上の「マイクが使えないときは」を確認してください。'
+        : '音をほとんど拾えませんでした。マイクの穴がふさがっていないか、ほかのアプリがマイクを使っていないか確認してください。';
+      log(`マイクの動作チェック: 最大音量 ${Math.round(peak * 100)}%`);
+    } catch (e) {
+      const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+      $('micCheckMsg').textContent = denied
+        ? 'マイクの使用が許可されていません。アドレスバー左の「ぁあ」→ Web サイトの設定 → マイク を「許可」にしてください。'
+        : 'マイクを開けませんでした（' + (e && e.name) + '）。';
+      log('マイクの動作チェック: 失敗 ' + (e && e.name) + ' ' + (e && e.message));
+    } finally {
+      // 音声認識とマイクを取り合わないよう、必ず手放す
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      if (ctx) ctx.close();
+      $('meterBar').style.width = '0';
+      checking = false;
+    }
+  });
+
   // ---- A. Web Speech API ----
   const recBtn = $('recBtn');
   let rec = null;
   let wantListening = false;   // ユーザーが「録音中」にしているか
   let pendingInterim = '';     // まだ確定していない文字
-  let lastResultAt = 0;
+  let lastResultAt = 0;        // この回の認識で最後に文字が出た時刻（ログ用）
+  let lastHeardAt = 0;         // 録音を始めてから最後に文字が出た時刻（自動停止用。つなぎ直しても戻さない）
   let startedAt = 0;
   let sessionNo = 0;
   let savedThisTap = 0;
+  let tapSegments = [];        // 日記モード：1 回の録音の区切りをためておく
+  let tapMode = 'memo';        // 録音を始めたときのモード
+  let lastError = '';
+  let emptyStreak = 0;         // 何も聞き取れずに終わった回数（つなぎ直しの空回り防止）
+  let sessionHadResult = false;
 
   function setRecUi(on) {
     recBtn.setAttribute('aria-pressed', String(on));
@@ -258,34 +452,54 @@
     recBtn.textContent = on ? '聞いています' : 'タップして話す';
   }
 
+  // 確定した文字の扱い：考えごとは区切りごとに保存、日記はためておく
+  function commitText(text, source) {
+    if (!text.trim()) return;
+    sessionHadResult = true;
+    if (tapMode === 'memo') {
+      if (saveEntry(text, source, 'memo')) savedThisTap++;
+    } else {
+      tapSegments.push(text);
+    }
+  }
+
   function startRecognition() {
     const n = ++sessionNo;
-    lastResultAt = performance.now(); // 開始前に無音タイマーが誤って働かないように
+    lastResultAt = performance.now();
+    sessionHadResult = false;
+    lastError = '';
     rec = new SR();
     rec.lang = 'ja-JP';
-    rec.continuous = true;
+    rec.continuous = $('optContinuous').checked;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
     rec.onstart = () => {
       startedAt = lastResultAt = performance.now();
-      log(`#${n} start`);
+      log(`#${n} start（連続モード: ${rec.continuous ? 'オン' : 'オフ'}）`);
     };
     rec.onaudiostart = () => log(`#${n} audiostart（マイクの入力が始まった）`);
     rec.onspeechstart = () => log(`#${n} speechstart`);
     rec.onspeechend = () => log(`#${n} speechend`);
     rec.onnomatch = () => log(`#${n} nomatch`);
-    rec.onerror = (e) => log(`#${n} error: ${e.error}${e.message ? ' ' + e.message : ''}`);
+    rec.onerror = (e) => {
+      lastError = e.error;
+      log(`#${n} error: ${e.error}${e.message ? ' ' + e.message : ''}`);
+      if (ERROR_HELP[e.error]) {
+        wantListening = false; // 直し方が必要なエラーは、つなぎ直さずに止める
+        showHelp(ERROR_HELP[e.error]);
+      }
+    };
 
     rec.onresult = (e) => {
-      lastResultAt = performance.now();
+      lastResultAt = lastHeardAt = performance.now();
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
         const txt = r[0].transcript;
         if (r.isFinal) {
           log(`#${n} 確定: 「${txt}」`);
-          if (saveMemo(txt, '声')) savedThisTap++;
+          commitText(txt, '声');
         } else {
           interim += txt;
         }
@@ -297,47 +511,71 @@
     rec.onend = () => {
       const now = performance.now();
       log(`#${n} end（開始から ${((now - startedAt) / 1000).toFixed(1)} 秒、最後に認識してから ${((now - lastResultAt) / 1000).toFixed(1)} 秒）`);
-      // iOS では確定しないまま終わることがあるので、残った文字も保存する
+      // iOS では確定しないまま終わることがあるので、残った文字も拾う
       if (pendingInterim.trim()) {
-        log(`#${n} 確定しないまま終わった文字を保存: 「${pendingInterim}」`);
-        if (saveMemo(pendingInterim, '声・未確定')) savedThisTap++;
+        log(`#${n} 確定しないまま終わった文字を拾う: 「${pendingInterim}」`);
+        commitText(pendingInterim, '声・未確定');
       }
       pendingInterim = '';
       $('interim').textContent = '';
 
-      if (wantListening && $('optRestart').checked) {
-        log('自動で再開します');
-        try { startRecognition(); return; } catch (err) { log('再開に失敗: ' + err.message); }
+      emptyStreak = sessionHadResult ? 0 : emptyStreak + 1;
+      const spinning = emptyStreak >= 3 && lastError && lastError !== 'no-speech';
+
+      if (wantListening && $('optChain').checked && !spinning) {
+        try {
+          startRecognition();
+          log(`自動でつなぎ直しました（#${sessionNo}）`);
+          return;
+        } catch (err) {
+          log('つなぎ直しに失敗: ' + err.message);
+        }
       }
+      if (spinning) log('何も聞き取れないまま止まり続けたので終了');
       if (wantListening) log('（ボタンを押していないのに止まりました）');
       finishTap();
     };
 
-    try {
-      rec.start();
-    } catch (err) {
-      log('start に失敗: ' + err.message);
-      finishTap();
-    }
+    rec.start();
   }
 
   function finishTap() {
     wantListening = false;
     setRecUi(false);
-    showStatus(savedThisTap > 0 ? '預かりました' : '聞き取れませんでした');
+    if (tapMode === 'diary' && tapSegments.length) {
+      const text = joinSegments(tapSegments);
+      if (saveEntry(text, '声', 'diary')) {
+        savedThisTap++;
+        log(`日記として保存（区切り ${tapSegments.length} 個、${text.length} 文字）`);
+      }
+    }
+    tapSegments = [];
+    if (savedThisTap > 0) showStatus(tapMode === 'memo' ? '預かりました' : '日記に残しました');
+    else if (!$('help').classList.contains('show')) showStatus('聞き取れませんでした');
   }
 
   recBtn.addEventListener('click', () => {
     if (!SR) {
-      showStatus('この端末では使えません。B を試してください');
+      showStatus('A は使えません。B を使ってください');
       log('音声認識 API が無いため開始できません');
       return;
     }
     if (!wantListening) {
+      hideHelp();
       wantListening = true;
       savedThisTap = 0;
+      emptyStreak = 0;
+      tapSegments = [];
+      tapMode = mode;
+      lastHeardAt = performance.now();
       setRecUi(true);
-      startRecognition();
+      try {
+        startRecognition();
+      } catch (err) {
+        log('start に失敗: ' + err.message);
+        showHelp(['音声認識を始められませんでした（' + err.message + '）。', 'B（キーボードのマイク）を使ってください。']);
+        finishTap();
+      }
     } else {
       log('ボタンで停止');
       wantListening = false;
@@ -345,10 +583,11 @@
     }
   });
 
-  // 10 秒話さなかったら止める（寝落ち対策）
+  // 話さない時間が続いたら止める（寝落ち対策）
   setInterval(() => {
-    if (wantListening && $('optSilence').checked && performance.now() - lastResultAt > 10000) {
-      log('10 秒認識が無かったので自動停止');
+    const limit = Number($('optSilence').value) * 1000;
+    if (wantListening && limit > 0 && performance.now() - lastHeardAt > limit) {
+      log(`${limit / 1000} 秒認識が無かったので自動停止`);
       wantListening = false;
       if (rec) rec.stop();
     }
@@ -358,33 +597,34 @@
   $('textBtn').addEventListener('click', () => {
     const el = $('textInput');
     const text = el.value;
-    if (saveMemo(text, 'キーボード')) {
-      log(`キーボードから保存: 「${text.trim()}」`);
+    if (saveEntry(text, 'キーボード', mode)) {
+      log(`キーボードから保存（${MODE_TEXT[mode].label}）: 「${text.trim()}」`);
       el.value = '';
       el.blur();
-      showStatus('預かりました');
+      showStatus(mode === 'memo' ? '預かりました' : '日記に残しました');
     }
   });
 
   $('clearBtn').addEventListener('click', () => {
-    if (!confirm('預けたメモを全部消しますか？')) return;
+    if (!confirm('残したものを全部消しますか？')) return;
     try { localStorage.removeItem(STORE_KEY); } catch {}
     renderMemos();
-    log('メモを全部消しました');
+    log('全部消しました');
   });
 
   // ---- 結果をコピー ----
   $('copyBtn').addEventListener('click', async () => {
     const memos = loadMemos();
     const report = [
-      '【おやすみメモ 音声入力の試作 結果】',
+      '【おやすみメモ 音声入力の試作 v2 結果】',
       '開き方: ' + $('envMode').textContent,
       '音声認識 API: ' + $('envSR').textContent,
       'マイクの許可: ' + $('envMic').textContent,
       '保存の保護: ' + $('envPersist').textContent,
-      'ブラウザ: ' + navigator.userAgent,
-      `保存したメモ: ${memos.length} 件`,
-      ...memos.map((m) => `- ${m.text}（${m.source}）`),
+      'ブラウザ: ' + ua,
+      `設定: つなぎ直し=${$('optChain').checked} / 連続モード=${$('optContinuous').checked} / 自動停止=${$('optSilence').value}秒`,
+      `残したもの: ${memos.length} 件`,
+      ...memos.map((m) => `- [${(MODE_TEXT[m.kind] || MODE_TEXT.memo).label}] ${m.text}（${m.source}）`),
       '',
       '--- ログ ---',
       ...logLines,
@@ -399,6 +639,7 @@
     }
   });
 
+  setMode('memo');
   renderMemos();
 })();
 </script>
