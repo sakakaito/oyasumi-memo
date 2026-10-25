@@ -75,11 +75,13 @@ npm run preview   # dist/ を手元で開く → http://localhost:4173/oyasumi-m
 | パッケージ | 種類 | 理由 |
 |---|---|---|
 | `react`・`react-dom` | 本体 | 画面を部品に分けて作り、夜・朝・設定の切り替えを状態で持つため |
+| `dexie` | 本体 | メモと日記を端末の中（IndexedDB）に保存するため。IndexedDB をそのまま使うより短く安全に書け、項目を足すときの版の管理（version）もできる |
 | `vite` | 開発用 | 開発用サーバーとビルド（紹介ページとアプリの 2 ページ構成）のため |
 | `@vitejs/plugin-react` | 開発用 | Vite で React（JSX）を変換するため |
 | `typescript` | 開発用 | 型の誤りをビルドの前に見つけるため（`tsc --noEmit`） |
 | `@types/react`・`@types/react-dom` | 開発用 | React の型の定義 |
 | `vitest` | 開発用 | 単体テスト。Vite と同じ設定で動くため |
+| `fake-indexeddb` | 開発用 | テスト（Node）には IndexedDB が無いので、その代わりにメモリ上で動かして保存と読み出しを確かめるため |
 
 画面の切り替えにルーター（URL ごとに画面を分ける部品）は使っていません。GitHub Pages では `/app/morning` のような URL を直接開くと 404 になるのを避け、依存も減らすためです。
 
@@ -88,7 +90,7 @@ npm run preview   # dist/ を手元で開く → http://localhost:4173/oyasumi-m
 ```
 index.html            紹介ページ（仮）
 app/index.html        アプリの入口
-src/                  アプリ（画面は src/screens/、夜/朝の判定は src/lib/time.ts、色は src/styles/theme.css）
+src/                  アプリ（画面は src/screens/、夜/朝の判定は src/lib/time.ts、保存は src/lib/db.ts、メモの区切りは src/lib/split.ts、色は src/styles/theme.css）
 tests/                単体テスト
 public/               そのまま dist/ に入るファイル（robots.txt・.nojekyll）
 scripts/              ビルドのあとのコピーと SEO 点検

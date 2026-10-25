@@ -102,3 +102,38 @@ h1:focus { outline: none; }
 .group p { margin: 0 0 var(--sp-3); }
 .sub-text { color: var(--text-sub); }
 .body .title + .group { margin-top: var(--sp-5); }
+
+/* ---- 夜：S2 の左上の日記の入口・S1 の補足（フェーズ2） ---- */
+.night .top > .icon-btn { margin-right: calc(var(--sp-2) * -1); }
+.night .sub { margin: var(--sp-2) 0 0; }
+
+/* ---- S4 文字で書く画面（screens.md 0-3 案1：全画面・上に寄せる。動きなし） ---- */
+.screen.write { display: block; }
+.write h1 { font-size: var(--fs-lead); font-weight: var(--fw-medium); line-height: var(--lh-title); margin: 0; }
+.write .close { margin-left: 0; margin-right: calc(var(--sp-2) * -1); }
+.write .entry {
+  display: block; width: 100%; margin: var(--sp-2) 0 0;
+  /* 4 行ぶんで固定。あふれたら欄の中でスクロール（欄が伸びる動きを出さない） */
+  height: calc(var(--fs-body) * var(--lh-body) * 4 + var(--sp-3) * 2 + 2px);
+  padding: var(--sp-3);
+  resize: none; overflow-y: auto;
+  font: inherit; font-size: var(--fs-body); line-height: var(--lh-body);
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-m);
+  -webkit-appearance: none; appearance: none; box-shadow: none;
+  color-scheme: dark;
+  caret-color: var(--text);
+}
+.write .entry::placeholder { color: var(--text-sub); opacity: 1; }
+.write .entry::selection { background: var(--rec-on); color: var(--text); }
+/* 入力中の印は枠の色で示す（暗い中で明るい外枠を出さない） */
+.write .entry:focus, .write .entry:focus-visible { outline: none; border-color: var(--text-sub); }
+/* 状態の 1 行：高さを常に 1 行ぶん確保。失敗したときだけ文字が入る */
+.write .wline { min-height: calc(var(--fs-min) * var(--lh-body)); margin: 0; color: var(--warn); }
+.write .wide { display: block; width: 100%; }
+/* 主ボタン：押せることが分かるよう枠を --text-sub に。空のあいだは aria-disabled で弱める（disabled 属性は使わない） */
+.write .btn.primary { border-color: var(--text-sub); }
+.write .btn.primary[aria-disabled="true"] { color: var(--text-sub); border-color: var(--line); cursor: default; }
+
+/* ---- 朝：フェーズ2 の件数の簡易表示 ---- */
+.morning .count { margin: 0 0 var(--sp-2); }

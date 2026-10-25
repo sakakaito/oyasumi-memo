@@ -140,11 +140,20 @@ describe('試作とモックを Vite に通さずコピーする', () => {
   });
 });
 
-describe('依存パッケージはフェーズ1 の範囲（plan.md フェーズ1 完了条件）', () => {
-  const allowedDeps = ['react', 'react-dom'];
-  const allowedDev = ['vite', '@vitejs/plugin-react', 'typescript', '@types/react', '@types/react-dom', 'vitest'];
+describe('依存パッケージは計画の範囲（plan.md フェーズ1 完了条件・フェーズ2 2-A）', () => {
+  // フェーズ2 で追加：dexie（端末内の保存）、fake-indexeddb（テストで IndexedDB の代わり。開発用のみ）
+  const allowedDeps = ['react', 'react-dom', 'dexie'];
+  const allowedDev = [
+    'vite',
+    '@vitejs/plugin-react',
+    'typescript',
+    '@types/react',
+    '@types/react-dom',
+    'vitest',
+    'fake-indexeddb',
+  ];
 
-  it('dependencies は React だけ', () => {
+  it('dependencies は React と Dexie だけ', () => {
     expect(Object.keys(pkg.dependencies ?? {}).sort()).toEqual([...allowedDeps].sort());
   });
 

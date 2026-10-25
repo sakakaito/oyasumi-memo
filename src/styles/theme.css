@@ -47,6 +47,12 @@
 
 /* ---- 夜（night）。読み込みの最初と紹介ページもこの色 ---- */
 :root {
+  /*
+   * iPhone のキーボード・フォームの部品を暗くする（screens.md 0-3）。'light dark' にすると
+   * 端末の設定に従って白いキーボードが出るので、夜は dark だけ。朝は下で light にする
+   */
+  color-scheme: dark;
+
   --n-bg:         #0b0b0f;
   --n-surface:    #141117;
   --n-surface-2:  #1b171b;
@@ -84,6 +90,7 @@
 
 /* ---- 朝（morning）。設定画面も朝の色 ---- */
 :root[data-mode="morning"] {
+  color-scheme: light;
   --m-bg:          #f6f2ea;
   --m-surface:     #fffdf8;
   --m-line:        #ddd3c6;

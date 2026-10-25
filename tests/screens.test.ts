@@ -7,12 +7,15 @@ import { App } from '../src/App';
 import { MorningScreen } from '../src/screens/MorningScreen';
 import { NightScreen } from '../src/screens/NightScreen';
 import { SettingsScreen } from '../src/screens/SettingsScreen';
+import { initialNightState } from '../src/lib/nightFlow';
 
 const noop = () => {};
 
-const renderNight = () => renderToStaticMarkup(createElement(NightScreen, { onMorning: noop }));
+const renderNight = () =>
+  renderToStaticMarkup(createElement(NightScreen, { state: initialNightState, dispatch: noop, onMorning: noop }));
+const zero = { nightMemos: 0, nightDiaries: 0, totalMemos: 0, totalDiaries: 0 };
 const renderMorning = () =>
-  renderToStaticMarkup(createElement(MorningScreen, { title: '10月24日の夜', onNight: noop, onSettings: noop }));
+  renderToStaticMarkup(createElement(MorningScreen, { title: '10月24日の夜', counts: zero, onNight: noop, onSettings: noop }));
 const renderSettings = () =>
   renderToStaticMarkup(createElement(SettingsScreen, { nightHours: '18:00〜翌 4:59', onBack: noop }));
 
@@ -87,7 +90,8 @@ describe('夜の画面（US-03）', () => {
 
   it('右上の切替アイコンは小さなアイコンボタン（文字なし・aria-label「朝の画面へ」）で、header の中にある', () => {
     const header = html.match(/<header\b[^>]*>[\s\S]*?<\/header>/)?.[0] ?? '';
-    const icons = buttons(header);
+    // フェーズ2 から header の左上に日記の入口（文字のボタン）も入るので、アイコンのボタンだけを数える
+    const icons = buttons(header).filter((b) => b.includes('class="icon-btn"'));
     expect(icons).toHaveLength(1);
     const icon = icons[0] ?? '';
     expect(icon).toContain('class="icon-btn"');
@@ -106,7 +110,7 @@ describe('朝の画面・設定（US-33 の手動切替と、設定への入り�
     expect(buttons(header).map(ariaLabel)).toEqual(['夜の画面へ', '設定']);
   });
 
-  it('朝の画面は空の状態の文言を出す（メモの保存はフェーズ2）', () => {
+  it('朝の画面は、件数が 0 なら空の状態の文言を出す', () => {
     expect(renderMorning()).toContain('昨夜は何も預かっていません');
   });
 

@@ -7,6 +7,8 @@ import { MorningScreen } from '../src/screens/MorningScreen';
 import { SettingsScreen } from '../src/screens/SettingsScreen';
 
 const noop = () => {};
+// 件数が 0 のとき（フェーズ2 から朝の画面は件数を受け取る）
+const zero = { nightMemos: 0, nightDiaries: 0, totalMemos: 0, totalDiaries: 0 };
 const visibleText = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 describe('F-2 朝の画面の見出しと本文が同じ夜を指す', () => {
@@ -16,7 +18,7 @@ describe('F-2 朝の画面の見出しと本文が同じ夜を指す', () => {
 
   it('今夜の分を見ているときは「今夜は…」', () => {
     const html = renderToStaticMarkup(
-      createElement(MorningScreen, { title: '10月25日の夜', nightLabel: '今夜', onNight: noop, onSettings: noop }),
+      createElement(MorningScreen, { title: '10月25日の夜', nightLabel: '今夜', counts: zero, onNight: noop, onSettings: noop }),
     );
     expect(visibleText(html)).toContain('今夜は何も預かっていません');
     expect(visibleText(html)).not.toContain('昨夜');
@@ -25,9 +27,17 @@ describe('F-2 朝の画面の見出しと本文が同じ夜を指す', () => {
   it('朝の時間帯に開くと、見出しは昨夜の日付で本文も「昨夜は…」', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 9, 25, 7, 30));
+    // 件数は開いたあとに端末から読むので、ここ（静的な描画）では見出しだけを確かめる。
+    // 本文の「昨夜」は、App が見出しと同じ latestNight から nightLabel を渡すことで揃う（下の MorningScreen の確認）
     const text = visibleText(renderToStaticMarkup(createElement(App)));
     expect(text).toContain('10月24日の夜');
-    expect(text).toContain('昨夜は何も預かっていません');
+    expect(text).not.toContain('今夜');
+    const body = visibleText(
+      renderToStaticMarkup(
+        createElement(MorningScreen, { title: '10月24日の夜', nightLabel: '昨夜', counts: zero, onNight: noop, onSettings: noop }),
+      ),
+    );
+    expect(body).toContain('昨夜は何も預かっていません');
   });
 });
 

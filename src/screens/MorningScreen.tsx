@@ -1,17 +1,20 @@
 import { IconButton } from '../components/IconButton';
 import { StatusLine } from '../components/StatusLine';
 import { GearIcon, MoonIcon } from '../components/icons';
+import type { CountsState } from '../hooks/useEntryCounts';
 import { NOT_READY, useNotice } from '../hooks/useNotice';
 
 interface Props {
   title: string; // 見出し（例：「10月24日の夜」）
   nightLabel?: '今夜' | '昨夜'; // 本文での呼び方。見出しと同じ夜から出す（src/lib/time.ts の latestNight）
+  counts: CountsState; // 見出しの夜の件数と全体の件数。読み込み中は null、読めなければ 'error'
   onNight: () => void;
   onSettings: () => void;
 }
 
-// S5 朝：昨夜の振り返り（screens.md）。メモの保存（フェーズ2）と一覧（フェーズ3）はまだなので、空の状態だけ出す
-export function MorningScreen({ title, nightLabel = '昨夜', onNight, onSettings }: Props) {
+// S5 朝：昨夜の振り返り（screens.md）。フェーズ2 は件数だけの簡易表示（S5「フェーズ2 の簡易表示」）。
+// 本文・一覧はフェーズ3。フェーズ3 で消すのは「確認用」の h2 と合計・補足だけ
+export function MorningScreen({ title, nightLabel = '昨夜', counts, onNight, onSettings }: Props) {
   const [notice, showNotice] = useNotice();
 
   return (
@@ -31,7 +34,24 @@ export function MorningScreen({ title, nightLabel = '昨夜', onNight, onSetting
       </header>
 
       <section className="body">
-        <p className="empty">{`${nightLabel}は何も預かっていません`}</p>
+        {counts === 'error' ? (
+          <p className="empty">件数を読み込めませんでした。アプリを開き直してください</p>
+        ) : counts ? (
+          <>
+            <p className="count">
+              {counts.nightMemos > 0
+                ? `${nightLabel}は ${counts.nightMemos} 件 預かっていました`
+                : `${nightLabel}は何も預かっていません`}
+            </p>
+            <p className="count">{`${nightLabel}の日記 ${counts.nightDiaries} 件`}</p>
+
+            <section className="group" aria-labelledby="saved-total">
+              <h2 id="saved-total">保存されている件数（確認用）</h2>
+              <p>{`メモ ${counts.totalMemos} 件・日記 ${counts.totalDiaries} 件`}</p>
+              <p className="sub-text">確かめるための表示です。昼に書いた分は、その日の夜の分として数えます。</p>
+            </section>
+          </>
+        ) : null}
       </section>
 
       <footer className="bottom fixed">
